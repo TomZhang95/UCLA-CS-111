@@ -1,0 +1,35 @@
+NAME: Tianyang Zhang
+EMAIL: ztytom1@gmail.com
+ID: 404743024
+
+BeagleBone Serial Number: BBGW17050342
+WIFI MAC Address: 2CF7F1066056
+
+Files Included:
+my_beaglebone.jpg:
+Me with the Beaglebone Green Wireless :)
+
+connected.png:
+The screen shot of ifconfig results. Before took this screen shot, I
+configured my board by using USB connection and enabled WIFI access.
+The screen shot shows the IP address of different type of connection
+of the board.
+
+copy.png:
+The screen shot of succeed scp command which send the source file of
+hello_world from my local machine to the board.
+
+build_run.png:
+The screen shot of compiling of hello_world and run the executable
+file 'hello'. The environment is under WIFI SSH access, by command:
+TomtekiMacBook-Pro:~ Tom$ ssh root@192.168.0.10
+which 192.168.0.10 is the wlan0 inet addr which shows in connection.png
+
+git.png:
+The screen shot of using 'git clone' command to cloned one of my repository
+in my github. Before doing clone, I first generated a key pair in the board
+and added the public key to my github account, otherwise the clone would
+be denied by 'no authorition'. The command I used are follow:
+ssh-keygen -t rsa -b 4096 -C "1050248157@qq.com"
+eval "$(ssh-agent -s)"
+ssh-add -k ~/.ssh/id_rsa

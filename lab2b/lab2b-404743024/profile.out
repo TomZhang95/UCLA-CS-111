@@ -1,0 +1,220 @@
+Total: 510 samples
+     343  67.3%  67.3%      509  99.8% thread_function
+      99  19.4%  86.7%       99  19.4% SortedList_insert
+      67  13.1%  99.8%       67  13.1% SortedList_lookup
+       1   0.2% 100.0%        1   0.2% _dl_fixup
+       0   0.0% 100.0%      509  99.8% __clone
+       0   0.0% 100.0%        1   0.2% __deallocate_stack
+       0   0.0% 100.0%        1   0.2% __free_stacks
+       0   0.0% 100.0%        1   0.2% __libc_start_main
+       0   0.0% 100.0%        1   0.2% _dl_runtime_resolve_sse_vex
+       0   0.0% 100.0%        1   0.2% _start
+       0   0.0% 100.0%        1   0.2% main
+       0   0.0% 100.0%        1   0.2% pthread_join
+       0   0.0% 100.0%      509  99.8% start_thread
+ROUTINE ====================== thread_function in /u/cs/ugrad/zhangt/CS111/lab2b/lab2_list.c
+   343    509 Total samples (flat / cumulative)
+     .      .   43: void signal_handler(){
+     .      .   44:     fprintf(stderr, "Segmentation fault.\n");
+     .      .   45:     exit(2);
+     .      .   46: }
+     .      .   47: 
+---
+     .      .   48: void* thread_function(void* argument) {
+     .      .   49:     int sublist_num = 0;
+     .      .   50:     struct timespec wait_start;
+     .      .   51:     struct timespec wait_end;
+     .      .   52:     struct thread_data* list_elements = (struct thread_data*)argument;
+     .      .   53:     long long *wait_time = &list_elements->wait_time;
+     .      .   54:     int iterations_num = list_elements->iter_num;
+     .      .   55:     int sync_type = list_elements->sync_type;
+     .      .   56:     
+     .      .   57:     signal(SIGSEGV, signal_handler);
+     .      .   58:     
+     .      .   59:     //pthread_mutex_t mutex = list_elements->m_sublist[sublist_num]->mutex_lock;
+     .      .   60:     //int spin_lock = list_elements->m_sublist[sublist_num]->spin_lock;
+     .      .   61:     
+     .      .   62:     /* Inserting */
+     .      .   63:     for(int i=0; i<iterations_num; i++){
+     .      .   64:         SortedListElement_t* temp = list_elements->elements[i];
+     .      .   65:         const char *key = temp->key;
+     .      .   66:         sublist_num = hash(key) % list_elements->list_num;
+     .      .   67:         
+     .      .   68:         clock_gettime(CLOCK_MONOTONIC, &wait_start);
+     .      .   69:         if (sync_type == 'm')
+     .      .   70:             pthread_mutex_lock(&list_elements->sublist[sublist_num]->mutex_lock);
+     .      .   71:         else if (sync_type == 's')
+   189    189   72:             while(__sync_lock_test_and_set(&list_elements->sublist[sublist_num]->spin_lock, 1) == 1);
+     .      .   73:         lock_num++;
+     .      .   74:         clock_gettime(CLOCK_MONOTONIC, &wait_end);
+     .      .   75:         *wait_time = *wait_time + (wait_end.tv_sec - wait_start.tv_sec) * 1000000000 + (wait_end.tv_nsec - wait_start.tv_nsec);
+     .      .   76:         
+     .     99   77:         SortedList_insert(list_elements->sublist[sublist_num]->m_list, temp);
+     .      .   78:         
+     .      .   79:         if(sync_type == 'm')
+     .      .   80:             pthread_mutex_unlock(&list_elements->sublist[sublist_num]->mutex_lock);
+     .      .   81:         else if(sync_type == 's')
+     .      .   82:             __sync_lock_release(&list_elements->sublist[sublist_num]->spin_lock);
+     .      .   83:     }
+     .      .   84:     
+     .      .   85:     /* Getting length */
+     .      .   86:     for (int i=0; i<list_elements->list_num; i++) {
+     .      .   87:         //mutex = list_elements->m_sublist[sublist_num]->mutex_lock;
+     .      .   88:         //spin_lock = list_elements->m_sublist[sublist_num]->spin_lock;
+     .      .   89:         
+     .      .   90:         clock_gettime(CLOCK_MONOTONIC, &wait_start);
+     .      .   91:         if (sync_type == 'm')
+     .      .   92:             pthread_mutex_lock(&list_elements->sublist[sublist_num]->mutex_lock);
+     .      .   93:         else if (sync_type == 's')
+     .      .   94:             while(__sync_lock_test_and_set(&list_elements->sublist[sublist_num]->spin_lock, 1) == 1);
+     .      .   95:         lock_num++;
+     .      .   96:         clock_gettime(CLOCK_MONOTONIC, &wait_end);
+     .      .   97:         *wait_time = *wait_time + (wait_end.tv_sec - wait_start.tv_sec) * 1000000000 + (wait_end.tv_nsec - wait_start.tv_nsec);
+     .      .   98:         
+     .      .   99:         SortedList_length(list_elements->sublist[i]->m_list);
+     .      .  100:         
+     .      .  101:         if(sync_type == 'm')
+     .      .  102:             pthread_mutex_unlock(&list_elements->sublist[sublist_num]->mutex_lock);
+     .      .  103:         else if(sync_type == 's')
+     .      .  104:             __sync_lock_release(&list_elements->sublist[sublist_num]->spin_lock);
+     .      .  105:     }
+     .      .  106:     
+     .      .  107:     /* Looking up and deleting */
+     .      .  108:     for(int i=0; i<iterations_num; i++){
+     .      .  109:         const char *key = list_elements->elements[i]->key;
+     .      .  110:         sublist_num = hash(key) % list_elements->list_num;
+     .      .  111:         //mutex = list_elements->m_sublist[sublist_num]->mutex_lock;
+     .      .  112:         //spin_lock = list_elements->m_sublist[sublist_num]->spin_lock;
+     .      .  113:         
+     .      .  114:         clock_gettime(CLOCK_MONOTONIC, &wait_start);
+     .      .  115:         if (sync_type == 'm')
+     .      .  116:             pthread_mutex_lock(&list_elements->sublist[sublist_num]->mutex_lock);
+     .      .  117:         else if (sync_type == 's')
+   153    153  118:             while(__sync_lock_test_and_set(&list_elements->sublist[sublist_num]->spin_lock, 1) == 1);
+     .      .  119:         lock_num++;
+     .      .  120:         clock_gettime(CLOCK_MONOTONIC, &wait_end);
+     .      .  121:         *wait_time = *wait_time + (wait_end.tv_sec - wait_start.tv_sec) * 1000000000 + (wait_end.tv_nsec - wait_start.tv_nsec);
+     .      .  122:         
+     1     68  123:         SortedListElement_t* temp = SortedList_lookup(list_elements->sublist[sublist_num]->m_list, list_elements->elements[i]->key);
+     .      .  124:         int error = SortedList_delete(temp) == 1;
+     .      .  125:         if (error == 1) {
+     .      .  126:             fprintf(stderr, "Corrupted list!\n");
+     .      .  127:             exit(0);
+     .      .  128:         }
+     .      .  129:         
+     .      .  130:         if(sync_type == 'm')
+     .      .  131:             pthread_mutex_unlock(&list_elements->sublist[sublist_num]->mutex_lock);
+     .      .  132:         else if(sync_type == 's')
+     .      .  133:             __sync_lock_release(&list_elements->sublist[sublist_num]->spin_lock);
+     .      .  134:     }
+     .      .  135:     
+     .      .  136:     pthread_exit(0);
+---
+     .      .  137: }
+     .      .  138: 
+     .      .  139: int main(int argc, const char * argv[]) {
+     .      .  140:     int opt = 0;
+     .      .  141:     int thread_num = 0;
+ROUTINE ====================== thread_function in /u/cs/ugrad/zhangt/CS111/lab2b/lab2_list.c
+   343    509 Total samples (flat / cumulative)
+     .      .   43: void signal_handler(){
+     .      .   44:     fprintf(stderr, "Segmentation fault.\n");
+     .      .   45:     exit(2);
+     .      .   46: }
+     .      .   47: 
+---
+     .      .   48: void* thread_function(void* argument) {
+     .      .   49:     int sublist_num = 0;
+     .      .   50:     struct timespec wait_start;
+     .      .   51:     struct timespec wait_end;
+     .      .   52:     struct thread_data* list_elements = (struct thread_data*)argument;
+     .      .   53:     long long *wait_time = &list_elements->wait_time;
+     .      .   54:     int iterations_num = list_elements->iter_num;
+     .      .   55:     int sync_type = list_elements->sync_type;
+     .      .   56:     
+     .      .   57:     signal(SIGSEGV, signal_handler);
+     .      .   58:     
+     .      .   59:     //pthread_mutex_t mutex = list_elements->m_sublist[sublist_num]->mutex_lock;
+     .      .   60:     //int spin_lock = list_elements->m_sublist[sublist_num]->spin_lock;
+     .      .   61:     
+     .      .   62:     /* Inserting */
+     .      .   63:     for(int i=0; i<iterations_num; i++){
+     .      .   64:         SortedListElement_t* temp = list_elements->elements[i];
+     .      .   65:         const char *key = temp->key;
+     .      .   66:         sublist_num = hash(key) % list_elements->list_num;
+     .      .   67:         
+     .      .   68:         clock_gettime(CLOCK_MONOTONIC, &wait_start);
+     .      .   69:         if (sync_type == 'm')
+     .      .   70:             pthread_mutex_lock(&list_elements->sublist[sublist_num]->mutex_lock);
+     .      .   71:         else if (sync_type == 's')
+   189    189   72:             while(__sync_lock_test_and_set(&list_elements->sublist[sublist_num]->spin_lock, 1) == 1);
+     .      .   73:         lock_num++;
+     .      .   74:         clock_gettime(CLOCK_MONOTONIC, &wait_end);
+     .      .   75:         *wait_time = *wait_time + (wait_end.tv_sec - wait_start.tv_sec) * 1000000000 + (wait_end.tv_nsec - wait_start.tv_nsec);
+     .      .   76:         
+     .     99   77:         SortedList_insert(list_elements->sublist[sublist_num]->m_list, temp);
+     .      .   78:         
+     .      .   79:         if(sync_type == 'm')
+     .      .   80:             pthread_mutex_unlock(&list_elements->sublist[sublist_num]->mutex_lock);
+     .      .   81:         else if(sync_type == 's')
+     .      .   82:             __sync_lock_release(&list_elements->sublist[sublist_num]->spin_lock);
+     .      .   83:     }
+     .      .   84:     
+     .      .   85:     /* Getting length */
+     .      .   86:     for (int i=0; i<list_elements->list_num; i++) {
+     .      .   87:         //mutex = list_elements->m_sublist[sublist_num]->mutex_lock;
+     .      .   88:         //spin_lock = list_elements->m_sublist[sublist_num]->spin_lock;
+     .      .   89:         
+     .      .   90:         clock_gettime(CLOCK_MONOTONIC, &wait_start);
+     .      .   91:         if (sync_type == 'm')
+     .      .   92:             pthread_mutex_lock(&list_elements->sublist[sublist_num]->mutex_lock);
+     .      .   93:         else if (sync_type == 's')
+     .      .   94:             while(__sync_lock_test_and_set(&list_elements->sublist[sublist_num]->spin_lock, 1) == 1);
+     .      .   95:         lock_num++;
+     .      .   96:         clock_gettime(CLOCK_MONOTONIC, &wait_end);
+     .      .   97:         *wait_time = *wait_time + (wait_end.tv_sec - wait_start.tv_sec) * 1000000000 + (wait_end.tv_nsec - wait_start.tv_nsec);
+     .      .   98:         
+     .      .   99:         SortedList_length(list_elements->sublist[i]->m_list);
+     .      .  100:         
+     .      .  101:         if(sync_type == 'm')
+     .      .  102:             pthread_mutex_unlock(&list_elements->sublist[sublist_num]->mutex_lock);
+     .      .  103:         else if(sync_type == 's')
+     .      .  104:             __sync_lock_release(&list_elements->sublist[sublist_num]->spin_lock);
+     .      .  105:     }
+     .      .  106:     
+     .      .  107:     /* Looking up and deleting */
+     .      .  108:     for(int i=0; i<iterations_num; i++){
+     .      .  109:         const char *key = list_elements->elements[i]->key;
+     .      .  110:         sublist_num = hash(key) % list_elements->list_num;
+     .      .  111:         //mutex = list_elements->m_sublist[sublist_num]->mutex_lock;
+     .      .  112:         //spin_lock = list_elements->m_sublist[sublist_num]->spin_lock;
+     .      .  113:         
+     .      .  114:         clock_gettime(CLOCK_MONOTONIC, &wait_start);
+     .      .  115:         if (sync_type == 'm')
+     .      .  116:             pthread_mutex_lock(&list_elements->sublist[sublist_num]->mutex_lock);
+     .      .  117:         else if (sync_type == 's')
+   153    153  118:             while(__sync_lock_test_and_set(&list_elements->sublist[sublist_num]->spin_lock, 1) == 1);
+     .      .  119:         lock_num++;
+     .      .  120:         clock_gettime(CLOCK_MONOTONIC, &wait_end);
+     .      .  121:         *wait_time = *wait_time + (wait_end.tv_sec - wait_start.tv_sec) * 1000000000 + (wait_end.tv_nsec - wait_start.tv_nsec);
+     .      .  122:         
+     1     68  123:         SortedListElement_t* temp = SortedList_lookup(list_elements->sublist[sublist_num]->m_list, list_elements->elements[i]->key);
+     .      .  124:         int error = SortedList_delete(temp) == 1;
+     .      .  125:         if (error == 1) {
+     .      .  126:             fprintf(stderr, "Corrupted list!\n");
+     .      .  127:             exit(0);
+     .      .  128:         }
+     .      .  129:         
+     .      .  130:         if(sync_type == 'm')
+     .      .  131:             pthread_mutex_unlock(&list_elements->sublist[sublist_num]->mutex_lock);
+     .      .  132:         else if(sync_type == 's')
+     .      .  133:             __sync_lock_release(&list_elements->sublist[sublist_num]->spin_lock);
+     .      .  134:     }
+     .      .  135:     
+     .      .  136:     pthread_exit(0);
+---
+     .      .  137: }
+     .      .  138: 
+     .      .  139: int main(int argc, const char * argv[]) {
+     .      .  140:     int opt = 0;
+     .      .  141:     int thread_num = 0;

@@ -1,0 +1,10 @@
+NAME: Tianyang Zhang
+EMAIL: ztytom1@gmail.com
+ID: 404743024
+
+Files included:
+Backtrace.png shows the gdb backtrace when segmentation fault detected.
+breakpoint.png shows the break point at segfault_trigger function, and the value of the trigger-pointer at the breakpoint line.
+lab0.c contains all the modules and the core code with comment in it.
+Makefile contains the compiling process, smoke check, clean, and dist options.
+The smoke check includes the test of regular input/output, the test of error dealing with input/output, and the test of segfault/catching option to trigger segfault and catch the error.

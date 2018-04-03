@@ -1,0 +1,25 @@
+NAME: Tianyang Zhang
+EMAIL: ztytom1@gmail.com
+ID: 404743024
+
+Including files:
+lab1-client.c:
+The source code of client which has a mandatory --port=number option, a
+optional --log=filename option, and a optional --encrypt=keyfilename 
+option. The client will try to connect to the server with corresponding
+port number, and the input after running lab1b-client will send to server
+as shell command, and will print out what server sends back to screen.
+
+lab1b-server.c:
+The source code of server which has a mandatory --port=number option, and
+a --encrypt=keyfilename option. The server is based on localhost, it would
+receive inputs from client, and send the data to shell, which run by it's
+child process. The return value from child process(shell) will send back
+to client by socket.
+
+Makefile:
+Simple compilation with -lmcrypt flag.
+
+my.key:
+A file which contains a string that less than 128 bits, this string will
+be use in --encrypt mode as the key base of mcrypt encryption.

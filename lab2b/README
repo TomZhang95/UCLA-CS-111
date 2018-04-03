@@ -1,0 +1,96 @@
+NAME: Tianyang Zhang
+EMAIL: ztytom1@gmail.com
+ID: 404743024
+
+Included files:
+Makefile: contains the simple make, clean, tests, graphs, profile, and dist functions.
+
+SortedList.h, SortedList.c : implementation of SortedList, with critical session identified.
+
+lab2_list.c: Source code of multi-threading program which doing operations on multiple double list with 
+--yield, —sync, —iterations, —threads, --list options. Return value of program called contains the 
+performance of program, and performance on locks.
+
+lab2b_test.sh: Contains test cases to generate CSV results
+
+lab2b_1.png: throughput vs number of threads for mutex and spin-lock synchronized list operations.
+
+lab2b_2.png: Average time per mutex wait and average time per operation for mutex-synchronized list operations.
+
+lab2b_3.png: Succeed iterations vs threads for mutex and spin-lock synchronizations.
+
+lab2b_4.png: Throughput vs number of threads for mutex synchronized partitioned lists.
+
+lab2b_5.png: Throughput vs number of threads for spin-lock synchronized partitioned lists.
+
+profile.out - execution profiling report showing where time was spent in the un-partitioned spin-lock implementation.
+
+
+ /* QUESTION 2.3.1 - Cycles in the basic list implementation: */
+- Where do you believe most of the cycles are spent in the 1 and 2-thread list tests ?
+The most of the cycles are spent on critical section executions(if large number of iterations). If the iteration
+number is small, the most cycles would be spent on generating thread(pthread_create) and initializing elements.
+
+- Why do you believe these to be the most expensive parts of the code?
+Since there are only 1 or 2 threads, the waiting time for each thread would be very small(no waiting time for single
+thread), and the memory contention would be very small. Thus, if iteration number is large, most of time would 
+spending on the execution of insert, look-up and delete.
+
+- Where do you believe most of the time/cycles are being spent in the high-thread spin-lock tests?
+Most of the cycles will spend on continuing trying to get the lock since spin-lock would not set thread to sleep
+state. The more thread generated, the more cycles would be spend on each thread to spinning waiting for lock.
+
+- Where do you believe most of the time/cycles are being spent in the high-thread mutex tests?
+I believe the most cycles are being spent in putting threads to sleep and waking up the threads. Mutex would set
+the threads which waiting for locks to sleep instead of spining. Therefore as the number of threads increasing, 
+more and more sleep and wake operations would be made by mutex. However, sleep and wake operations are quite 
+expensive, which may cost more time and cycles than spin-lock.
+
+
+ /* QUESTION 2.3.2 - Execution Profiling: */
+- Where (what lines of code) are consuming most of the cycles when the spin-lock version of the list exerciser is 
+run with a large number of threads?
+The method that consuming most of the cycles should be thread_function which contains all critical sections. The 
+lines that consuming most of the cycles inside thread_function are the lines execute spin-lock and calling of 
+sorted list(SortedList_insert, SortedList_length, SortedList_lookup).
+
+- Why does this operation become so expensive with large numbers of threads?
+Same as the answer of question 2.3.1(3 & 4), the more threads it generated, the more time each thread would wait
+to get the lock from other running threads. In the mean time, the cycles would be spend on spinning in spin-lock,
+or the cycles would be spend on sleeping/waking calls in mutex.
+
+
+ /* QUESTION 2.3.3 - Mutex Wait Time: */
+- Look at the average time per operation (vs. # threads) and the average wait-for-mutex time (vs. #threads).
+	- Why does the average lock-wait time rise so dramatically with the number of contending threads?
+	As mentioned above, the more threads created, the more waiting time would each thread spend. All other
+	threads other than current running thread would wait and do nothing.
+
+	- Why does the completion time per operation rise (less dramatically) with the number of contending threads?
+	Since threads need to call sleep/wake in mutex, and memory contention happened in spin-lock, more threads
+	would spend more time on those overhead. Since those time not including waiting time, it will rise less
+	dramatically.
+
+	- How is it possible for the wait time per operation to go up faster (or higher) than the completion time 
+	per operation?
+	The completion time is about equal to wall clock time, the only difference is the time spent on sleeping/
+	waking threads and time spent on memory contention. However the waiting time includes each thread's waiting
+	time on getting the lock. As the threads increasing, waiting time would increase much faster than sleeping/
+	waking time.
+
+
+ /* QUESTION 2.3.4 - Performance of Partitioned Lists */
+- Explain the change in performance of the synchronized methods as a function of the number of lists.
+As the number of the lists increasing, the performance should be better and better, but performance would not
+increase if number of lists is much more than number of threads.
+
+- Should the throughput continue increasing as the number of lists is further increased? If not, explain why not.
+This is depending on the number of lists and number of threads. If the number of lists is much larger than the
+number of threads, then there would be no increasing on throughput as number of lists increasing. However, if the
+number of lists is much smaller than number of threads, the throughput would increasing as number of lists
+increasing.
+
+- It seems reasonable to suggest the throughput of an N-way partitioned list should be equivalent to the throughput of a single list with fewer (1/N) threads. Does this appear to be true in the above curves? If not, explain why not.
+No, in the graph, it shows that the N-way partitioned list is more efficient than (1/N) threads. In the N-way list,
+the waiting time and sleeping/waking time spend by each thread will be reduced a lot(ideally no waiting time). Besides
+the waiting time, N-way list also reduced the memory contention.

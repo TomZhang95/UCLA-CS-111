@@ -1,0 +1,30 @@
+NAME: Tianyang Zhang
+EMAIL: ztytom1@gmail.com
+ID: 404743024
+
+Including files:
+lab1a.c:
+Contains source code of a character-at-a-time, no-echo mode
+terminal. After compile, run with --shell option will bring
+the user to the shell mode. When --shell option applied, the
+program will change the current terminal arguments to a new
+setting, then fork a new process as child process, then run
+shell by execvp() in child process. The communication between
+parent process and child process are based on two pipes, and
+also has corresponding poll() function to avoid conflict during
+data transaction between parent process and child process.
+When the program receive ^C or ^D from keyboard, the program 
+will exit with corresponding exit code.
+
+Exit codes:
+0 ... normal execution, shutdown on ^D
+1 ... unrecognized argument or system call failure
+
+
+Makefile:
+A simple make file that include compile, clean and tar features.
+
+
+Reference:
+man page and wikipedia of functions waitpid(), poll(), exec(), 
+execvp(), fork()...etc.

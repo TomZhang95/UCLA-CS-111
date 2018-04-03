@@ -1,0 +1,105 @@
+NAME: Tianyang Zhang
+EMAIL: ztytom1@gmail.com
+ID: 404743024
+
+Included files:
+Makefile: contains the simple make, clean, tests, graphs, and dist function
+2 cvs file: contain result data from tests
+9 png file: show the efficiency of different types locks.
+2 gp file: script to plot data from spec
+SortedList.h, SortedList.c : implementation of SortedList, with critical session identified
+lab2_add.c: implement a simple counter with --yield, —sync, —iterations, —threads flags.
+lab2_list.c: double list with --yield, —sync, —iterations, —threads flags.
+
+Part 1:
+ /* QUESTION 2.1.1 - causing conflicts: */
+- Why does it take many iterations before errors are seen?
+The errors are caused by racing condition in multi-threading process. The racing condition happens
+when two threads running the same critical session at the same time. However, If we are "lucky" 
+enough, we may never have a racing condition happen with a small number of iterations.
+The probability of getting errors would be increasing as number of iterations growing, therefore,
+the more iterations we do, we will more likely get an error.
+
+- Why does a significantly smaller number of iterations so seldom fail?
+Same as the question above, for example, if we have 10% chance receive an error, then it has a
+high probability that we won't receive any error in 10 iterations. But if we do a million iterations,
+it would be most likely receive around 100000 errors.
+
+
+ /* QUESTION 2.1.2 - cost of yielding: */
+- Why are the --yield runs so much slower?
+The man page of sched_yield() says: “sched_yield() causes the calling thread to relinquish the CPU”.
+When a thread called sched_yield(), it would be removed to the end of queue to use the CPU resource,
+the switching of threads would cause thread context switch, if we call sched_yield() every time when 
+calling each add function, it would be a large waste by context switch.
+
+- Where is the additional time going?
+The additional time is spent on context switch and the waiting time of other thread like the description
+in above question.
+
+- Is it possible to get valid per-operation timings if we are using the --yield option? If so, explain how. 
+If not, explain why not.
+We cannot get the accurate time of per-operation timings when using the --yield option. Because a large
+portion of the time is spent on the sched_yield() call and the relevant context switch, and thus the
+runtime we got is not the time spent on critical session but the overall time. When the time overhead is
+large, the per-operation time we got is not accurate, and since we cannot get the time overhead, we cannot
+calculate the per-operation time.
+
+
+ /* QUESTION 2.1.3 - measurement errors: */
+- Why does the average cost per operation drop with increasing iterations?
+Because scheduling threads has a relatively big cost on time. When the iterations number is small, big
+part of overall time is spending on creating and managing the threads. As the iterations increasing, the
+relatively cost scheduling threads would become smaller and smaller, and thus the average cost per operation
+drops.
+
+- If the cost per iteration is a function of the number of iterations, how do we know how many iterations to run 
+(or what the "correct" cost is)?
+The gettime() method couldn't give us the time spent on critical session, and thus the only way we can get rid
+of time overhead is use iterations as large as possible. The larger iterations we run, the more accurate result
+of per operation cost we will get.
+
+
+ /* QUESTION 2.1.4 - costs of serialization: */
+- Why do all of the options perform similarly for low numbers of threads?
+When the number of threads is low, each thread would have less waiting time on each lock, and each thread would
+sharing more resource with each other. In other words, the time spending on switching threads would be less. If
+we run each method in 1 thread, the performance would be roughly the same.
+
+- Why do the three protected operations slow down as the number of threads rises?
+One main reason is the memory contention. Since the methods are all protected by different kinds of locks, the 
+more threads the program run, each threads would spend more time on getting and waiting lock. In addition, if
+many people using the linux server together, or say a lot of threads running together on the server, there would
+be more time spending on the switch of threads, and maybe even waiting for other threads.
+
+ /* QUESTION 2.2.1 - scalability of Mutex */
+-Compare the variation in time per mutex-protected operation vs the number of threads in Part-1 (adds) and Part-2 
+(sorted lists).
+Both curves shows a increasing cost per operations as the threads increases. The growth rate in Part-1 is slowing
+down as threads increase, but Part-2's growth is more like linear.
+
+-Comment on the general shapes of the curves, and explain why they have this shape.
+In Part-1, the curve is trends to be flat towards the end. As question 2.1.3 mentioned, as the threads
+increased, the time per operation drop because the time portion of creating/joining threads become smaller, and
+it also cause less memory contention. In Part-2, the curve increases about linearly.
+
+-Comment on the relative rates of increase and differences in the shapes of the curves, and offer an explanation 
+for these differences.
+The part-1 curve has a lower relative rate of increase from the graph. That's because the critical section in
+Part-1 is relatively much smaller than Part-2, and thus every thread finish the work fast and reduced memory 
+contention. Part-2 has relatively much more complicate and expensive critical sections. And it would cause on
+more memory contention.
+
+ /* QUESTION 2.2.2 - scalability of spin locks */
+-Compare the variation in time per protected operation vs the number of threads for list operations protected by 
+Mutex vs Spin locks. Comment on the general shapes of the curves, and explain why they have this shape.
+In part-1, the cost per operation of Mutex lock become stable after the threads number increased to 4, and spin 
+lock has the same. Both curve is concave down but the spin locks always has less time per operation, the main 
+reason is still the memory contention. In Part-2, the cost per operation of both lock grow almost linearly, and
+mutex has a less time per operation at the most time.
+
+-Comment on the relative rates of increase and differences in the shapes of the curves, and offer an explanation 
+for these differences.
+Spin lock is more efficient on simple critical sections, but it would be slow dealing with more complex critical
+sections due to the memory contention in spin locks are more intense. Mutex has better performance as the complexity
+increasing in critical sections.
